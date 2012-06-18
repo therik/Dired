@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>fileTypes</key>
+	<array>
+		<string></string>
+	</array>
+	<key>name</key>
+	<string>Dired</string>
+	<key>patterns</key>
+	<array>
+		<dict>
+			<key>comment</key>
+			<string>De-emphasize the file id</string>
+			<key>match</key>
+			<string>^[ ]*[0-9]+:</string>
+			<key>name</key>
+			<string>comment</string>
+		</dict>
+		<dict>
+			<key>captures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>constant.numeric</string>
+				</dict>
+			</dict>
+			<key>comment</key>
+			<string>File size</string>
+			<key>match</key>
+			<string>([0-9.]+[bkMG]) </string>
+			<key>name</key>
+			<string>dired.filesize</string>
+		</dict>
+		<dict>
+			<key>captures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>entity.name.type</string>
+				</dict>
+				<key>2</key>
+				<dict>
+					<key>name</key>
+					<string>keyword.operator</string>
+				</dict>
+			</dict>
+			<key>match</key>
+			<string>[|]: (.*)(/)$</string>
+			<key>name</key>
+			<string>dired.directory</string>
+		</dict>
+		<dict>
+			<key>captures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>entity.name.function</string>
+				</dict>
+				<key>2</key>
+				<dict>
+					<key>name</key>
+					<string>keyword.operator</string>
+				</dict>
+			</dict>
+			<key>match</key>
+			<string>[|]: (.*)( )$</string>
+			<key>name</key>
+			<string>dired.filename</string>
+		</dict>
+		<dict>
+			<key>captures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>entity.name.exception</string>
+				</dict>
+				<key>2</key>
+				<dict>
+					<key>name</key>
+					<string>keyword.operator</string>
+				</dict>
+			</dict>
+			<key>comment</key>
+			<string>File name plus some decoration</string>
+			<key>match</key>
+			<string>[|]: (.*)(@)$</string>
+			<key>name</key>
+			<string>dired.symlink</string>
+		</dict>
+	</array>
+	<key>scopeName</key>
+	<string>text.dired</string>
+	<key>uuid</key>
+	<string>3c672ce1-ce76-456b-9bfc-506293138bb6</string>
+</dict>
+</plist>

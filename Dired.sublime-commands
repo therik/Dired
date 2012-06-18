@@ -1,0 +1,10 @@
+[
+	{
+		"caption": "Dired: Open Directory",
+		"command": "dired"
+	},
+	{
+		"caption": "Dired: Open File",
+		"command": "dired_open_file"
+	}
+]

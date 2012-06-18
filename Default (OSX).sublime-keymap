@@ -1,0 +1,118 @@
+[
+	{
+		"keys": ["super+k", "super+d"],
+		"command": "dired",
+		"args": {"directory": false}
+	},
+	{
+		"keys": ["super+k", "super+shift+d"],
+		"command": "dired_project",
+		"args": {"directory": false}
+	},
+	{
+		"keys": ["enter"],
+		"command": "dired_open_file",
+		"context": [{
+			"key": "selector",
+			"operator": "equal",
+			"operand": "text.dired"
+		}]
+	},
+	{
+		"keys": ["i"],
+		"command": "dired_expand_directory",
+		"context": [{
+			"key": "selector",
+			"operator": "equal",
+			"operand": "text.dired"
+		}]
+	},
+	{
+		"keys": ["p"],
+		"command": "move",
+		"args": {"by": "lines", "forward": false},
+		"context": [{
+			"key": "selector",
+			"operator": "equal",
+			"operand": "text.dired"
+		}]
+	},
+	{
+		"keys": ["k"],
+		"command": "move",
+		"args": {"by": "lines", "forward": false},
+		"context": [{
+			"key": "selector",
+			"operator": "equal",
+			"operand": "text.dired"
+		}]
+	},
+	{
+		"keys": ["n"],
+		"command": "move",
+		"args": {"by": "lines", "forward": true},
+		"context": [{
+			"key": "selector",
+			"operator": "equal",
+			"operand": "text.dired"
+		}]
+	},
+	{
+		"keys": ["j"],
+		"command": "move",
+		"args": {"by": "lines", "forward": true},
+		"context": [{
+			"key": "selector",
+			"operator": "equal",
+			"operand": "text.dired"
+		}]
+	},
+	{
+		"keys": ["s", "n"],
+		"command": "dired_sort",
+		"args": {"sort": "name", "reverse": false},
+		"context": [{
+			"key": "selector",
+			"operator": "equal",
+			"operand": "text.dired"
+		}]
+	},
+	{
+		"keys": ["s", "d"],
+		"command": "dired_sort",
+		"args": {"sort": "mtime", "reverse": true},
+		"context": [{
+			"key": "selector",
+			"operator": "equal",
+			"operand": "text.dired"
+		}]
+	},
+	{
+		"keys": ["s", "r"],
+		"command": "dired_reverse_sort",
+		"context": [{
+			"key": "selector",
+			"operator": "equal",
+			"operand": "text.dired"
+		}]
+	},
+	{
+		"keys": ["q"],
+		"command": "close",
+		"context": [{
+			"key": "selector",
+			"operator": "equal",
+			"operand": "text.dired"
+		}]
+	},
+	{
+		"keys": ["/"],
+		"command": "show_panel",
+		"args": {"panel": "find"},
+		"context": [{
+			"key": "selector",
+			"operator": "equal",
+			"operand": "text.dired"
+		}]
+	}
+]
