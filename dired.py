@@ -2,34 +2,41 @@ import sublime, sublime_plugin, os, os.path
 from os import listdir, lstat
 from os.path import dirname, isdir, islink, join, realpath, relpath, commonprefix
 
-class DiredCommand(sublime_plugin.WindowCommand):
-	def find_view(self, directory):
-		for v in self.window.views():
-			if "Dired: " + directory == v.name():
-				return self.init_view(v, directory)
-		return self.init_view(self.new_view(directory), directory)
+class DiredView(object):
+	"""docstring for DiredView"""
+	def __init__(self, window, directory):
+		super(DiredView, self).__init__()
+		self.directory = directory
 
-	def new_view(self, directory):
-		result = self.window.new_file()
-		result.settings().set('default_dir', directory)
-		result.settings().set('dired_expanded', [])
-		result.settings().set('dired_sort', 'name')
-		result.settings().set('dired_sort_reverse', False)
-		result.settings().set('command_mode', False)
-		result.settings().set('dired_current_line', 0)
-		return result
-	
-	def init_view(self, view, directory):
-		r = sublime.Region(0, -1 + view.size())
-		edit = view.begin_edit()
-		view.erase(edit, r)
-		view.end_edit(edit)
-		view.set_name("Dired: " + directory)
-		view.set_scratch(True)
-		view.set_syntax_file("Packages/Dired/Dired.tmLanguage")
-		view.settings().set('dired_directory', directory)
-		return view
-	
+		self.view = None
+		# check to see if the view already exists
+		for view in window.views():
+			if "Dired: " + directory == view.name():
+				self.view = view
+
+		# create a new view if we did not return an existing one
+		if not self.view:
+			self.view = window.new_file()
+			self.view.settings().set('default_dir', directory)
+			self.view.settings().set('dired_expanded', [])
+			self.view.settings().set('dired_sort', 'name')
+			self.view.settings().set('dired_sort_reverse', False)
+			self.view.settings().set('command_mode', False)
+			self.view.settings().set('dired_current_line', 0)
+
+		region = sublime.Region(0, -1 + self.view.size())
+		edit = self.view.begin_edit()
+		self.view.erase(edit, region)
+		self.view.end_edit(edit)
+		self.view.set_name("Dired: " + self.directory)
+		self.view.set_scratch(True)
+		self.view.set_syntax_file("Packages/Dired/Dired.tmLanguage")
+		self.view.settings().set('dired_directory', self.directory)
+
+	def settings(self):
+		return self.view.settings()
+
+class DiredCommand(sublime_plugin.WindowCommand):
 	def create_entry(self, root, name):
 		is_parent = (name == '..')
 		if is_parent:
@@ -92,10 +99,11 @@ class DiredCommand(sublime_plugin.WindowCommand):
 	def run(self, directory=False):
 		suffixes = ['b', 'k', 'M', 'G']
 		directory = self.determine_directory(directory)
-		v = self.find_view(directory)
-		entries = self.get_entries(v)
-		v.settings().set('dired_entries', entries)
-		edit = v.begin_edit()
+		#v = self.find_view(directory)
+		diredView = DiredView(self.window, directory)
+		entries = self.get_entries(diredView.view)
+		diredView.view.settings().set('dired_entries', entries)
+		edit = diredView.view.begin_edit()
 		pt = 0
 		for fil in entries:
 			filpath = fil['full']
@@ -112,15 +120,15 @@ class DiredCommand(sublime_plugin.WindowCommand):
 				type = '/'
 			else:
 				type = ' '
-			pt += v.insert(edit, pt, size_str + " |: " + fil['name'] + type + "\n")
-		v.end_edit(edit)
-		line = v.settings().get('dired_current_line')
-		pt = v.text_point(line, 0)
-		v.sel().clear()
-		v.sel().add(sublime.Region(pt))
-		v.show_at_center(pt)
-		self.update_status(v)
-		self.window.focus_view(v)
+			pt += diredView.view.insert(edit, pt, size_str + " |: " + fil['name'] + type + "\n")
+		diredView.view.end_edit(edit)
+		line = diredView.view.settings().get('dired_current_line')
+		pt = diredView.view.text_point(line, 0)
+		diredView.view.sel().clear()
+		diredView.view.sel().add(sublime.Region(pt))
+		diredView.view.show_at_center(pt)
+		self.update_status(diredView.view)
+		self.window.focus_view(diredView.view)
 
 class DiredProjectCommand(DiredCommand):
 	def determine_directory(self, directory):
