@@ -114,5 +114,6 @@
 			"operator": "equal",
 			"operand": "text.dired"
 		}]
-	}
+	},
+	{ "keys": ["super+shift+u"], "command": "dired_open_parent_directory"}
 ]

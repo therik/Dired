@@ -59,6 +59,7 @@ class DiredCommand(sublime_plugin.WindowCommand):
 			unsorted.append(self.create_entry(root, t))
 		for sub in expanded:
 			subroot = join(root, sub)
+			if not os.path.isdir(subroot): continue
 			sublist = listdir(subroot)
 			for x in sublist:
 				unsorted.append(self.create_entry(root, relpath(join(subroot, x), root)))
@@ -82,7 +83,7 @@ class DiredCommand(sublime_plugin.WindowCommand):
 		else:
 			return directory
 
-	def run(self, directory):
+	def run(self, directory=False):
 		suffixes = ['b', 'k', 'M', 'G']
 		directory = self.determine_directory(directory)
 		v = self.find_view(directory)
@@ -90,7 +91,6 @@ class DiredCommand(sublime_plugin.WindowCommand):
 		v.settings().set('dired_entries', entries)
 		edit = v.begin_edit()
 		pt = 0
-		idx = 0
 		for fil in entries:
 			filpath = fil['full']
 			size = fil['size']
@@ -106,9 +106,7 @@ class DiredCommand(sublime_plugin.WindowCommand):
 				type = '/'
 			else:
 				type = ' '
-			idx_str = '{0:4d}'.format(idx)
-			pt += v.insert(edit, pt, idx_str + ': ' + size_str + " |: " + fil['name'] + type + "\n")
-			idx += 1
+			pt += v.insert(edit, pt, size_str + " |: " + fil['name'] + type + "\n")
 		v.end_edit(edit)
 		line = v.settings().get('dired_current_line')
 		pt = v.text_point(line, 0)
@@ -132,11 +130,8 @@ class DiredProjectCommand(DiredCommand):
 
 class DiredLineParser(sublime_plugin.TextCommand):
 	def get_entry(self):
-		v = self.view
-		line = v.substr(v.line(v.sel()[0]))
-		sep_pos = line.find(':')
-		idx = int(line[0:sep_pos])
-		result = v.settings().get('dired_entries')[idx]
+		line_number = self.view.rowcol(self.view.sel()[0].begin())[0]
+		result = self.view.settings().get('dired_entries')[line_number]
 		return result
 	
 	def record_point(self):
@@ -161,6 +156,14 @@ class DiredOpenFileCommand(DiredLineParser):
 			self.dired(directory=f)
 		else:
 			v.window().open_file(f)
+
+class DiredOpenParentDirectory(sublime_plugin.TextCommand):
+	def run(self, directory=False):
+		directory = self.view.settings().get('dired_directory')
+		directory = os.path.dirname(directory)
+		self.view.window().run_command('dired', {
+			'directory': directory,
+		})
 
 class DiredExpandDirectoryCommand(DiredLineParser):
 	def run(self, edit):
