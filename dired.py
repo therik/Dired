@@ -36,7 +36,13 @@ class DiredCommand(sublime_plugin.WindowCommand):
 			full = dirname(root)
 		else:
 			full = join(root, name)
-		st = os.stat(full)
+		try:
+			st = os.stat(full)
+		except Exception, e:
+			pass
+		finally:
+			st = os.lstat(full)
+
 		mtime = st.st_mtime
 		size = st.st_size
 		return {
