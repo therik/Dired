@@ -7,6 +7,7 @@ class DiredView(object):
 	def __init__(self, window, directory):
 		super(DiredView, self).__init__()
 		self.directory = directory
+		self.suffixes = ['b', 'k', 'M', 'G']
 
 		self.view = None
 		# check to see if the view already exists
@@ -33,10 +34,34 @@ class DiredView(object):
 		self.view.set_syntax_file("Packages/Dired/Dired.tmLanguage")
 		self.view.settings().set('dired_directory', self.directory)
 
-	def settings(self):
-		return self.view.settings()
+	def populate(self):
+		entries = self.get_entries(self.view)
+		self.view.settings().set('dired_entries', entries)
+		edit = self.view.begin_edit()
+		pt = 0
+		for fil in entries:
+			filpath = fil['full']
+			size = fil['size']
+			i = 0
+			while (i < len(self.suffixes) and size > 1024):
+				i += 1
+				size = size / 1024
+			if (i >= len(self.suffixes)): i = -1 + len(self.suffixes)
+			size_str = '{0:>8.1f}'.format(size) + self.suffixes[i]
+			if (islink(filpath)):
+				type = '@'
+			elif (isdir(filpath)):
+				type = '/'
+			else:
+				type = ' '
+			pt += self.view.insert(edit, pt, size_str + " |: " + fil['name'] + type + "\n")
+		self.view.end_edit(edit)
+		line = self.view.settings().get('dired_current_line')
+		pt = self.view.text_point(line, 0)
+		self.view.sel().clear()
+		self.view.sel().add(sublime.Region(pt))
+		self.view.show_at_center(pt)
 
-class DiredCommand(sublime_plugin.WindowCommand):
 	def create_entry(self, root, name):
 		is_parent = (name == '..')
 		if is_parent:
@@ -60,7 +85,7 @@ class DiredCommand(sublime_plugin.WindowCommand):
 			'mtime': mtime,
 			'size': size,
 		}
-	
+
 	def get_entries(self, view):
 		root = view.settings().get('dired_directory')
 		expanded = view.settings().get('dired_expanded')
@@ -79,6 +104,7 @@ class DiredCommand(sublime_plugin.WindowCommand):
 		return ([self.create_entry(root, '..')] +
 			sorted(unsorted, key=lambda x: x[sort_key], reverse=sort_reverse))
 
+class DiredCommand(sublime_plugin.WindowCommand):
 	def update_status(self, view):
 		view.set_status('dired_sort', 'Sort by ' + view.settings().get('dired_sort'))
 		if view.settings().get('dired_sort_reverse'):
@@ -97,36 +123,9 @@ class DiredCommand(sublime_plugin.WindowCommand):
 			return directory
 
 	def run(self, directory=False):
-		suffixes = ['b', 'k', 'M', 'G']
 		directory = self.determine_directory(directory)
-		#v = self.find_view(directory)
 		diredView = DiredView(self.window, directory)
-		entries = self.get_entries(diredView.view)
-		diredView.view.settings().set('dired_entries', entries)
-		edit = diredView.view.begin_edit()
-		pt = 0
-		for fil in entries:
-			filpath = fil['full']
-			size = fil['size']
-			i = 0
-			while (i < len(suffixes) and size > 1024):
-				i += 1
-				size = size / 1024
-			if (i >= len(suffixes)): i = -1 + len(suffixes)
-			size_str = '{0:>8.1f}'.format(size) + suffixes[i]
-			if (islink(filpath)):
-				type = '@'
-			elif (isdir(filpath)):
-				type = '/'
-			else:
-				type = ' '
-			pt += diredView.view.insert(edit, pt, size_str + " |: " + fil['name'] + type + "\n")
-		diredView.view.end_edit(edit)
-		line = diredView.view.settings().get('dired_current_line')
-		pt = diredView.view.text_point(line, 0)
-		diredView.view.sel().clear()
-		diredView.view.sel().add(sublime.Region(pt))
-		diredView.view.show_at_center(pt)
+		diredView.populate()
 		self.update_status(diredView.view)
 		self.window.focus_view(diredView.view)
 
