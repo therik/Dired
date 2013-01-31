@@ -1,8 +1,33 @@
+Originally cloned from https://bitbucket.org/hibbelig/dired
+
+Although, I am rewriting a lot of it and adding more of the functionality that I use in emacs dired.
+
 # Dired -- A directory browser in a Sublime Text 2 plugin
 
-The main entry point is `Ctrl+Shift+d` which brings up a directory browser for the current directory (the directory of the current view).  You can then navigate to the next/previous line with the cursor keys, or with `n/p`, or with `j/k`.
+The main entry point is `super+k, super+d` on OS X, which brings up a directory browser for the current directory (the directory of the current view).  You can then navigate to the next/previous line with the cursor keys, or with `n/p`, or with `j/k`.
 
 You can open the file on the current line with `Enter`.  If there is a directory on the current line, a new directory browser is created for that directory.
+
+# Supported operations
+
+## Dired-Mode
+
+### OS X
+`<Enter>` : Open file
+
+`i` : expand directory
+
+`s, n` : sort name
+
+`s, d` : sort date
+
+`s, r` : revers sort
+
+`q` : quit
+
+`/` : open panel
+
+`super+shift+u` : move up a directory
 
 # License
 
