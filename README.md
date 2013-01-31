@@ -27,7 +27,7 @@ You can open the file on the current line with `Enter`.  If there is a directory
 
 `/` : open panel
 
-`super+shift+u` : move up a directory
+`^`: move up a directory
 
 # License
 

@@ -115,5 +115,13 @@
 			"operand": "text.dired"
 		}]
 	},
-	{ "keys": ["super+shift+u"], "command": "dired_open_parent_directory"}
+	{ 
+		"keys": ["^"], 
+		"command": "dired_open_parent_directory",
+			"context": [{
+			"key": "selector",
+			"operator": "equal",
+			"operand": "text.dired"
+		}]
+	}
 ]
