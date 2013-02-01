@@ -2,13 +2,19 @@ import sublime
 import sublime_plugin
 import os
 import os.path
-from os import path
-from os import listdir
 from os.path import dirname
+from os import listdir
 from os.path import isdir
-from os.path import join
 from os.path import commonprefix
 from os.path import relpath
+from stat import *
+from os.path import join
+import os
+import os.path
+from os import path
+import grp
+import pwd
+import os
 
 
 class Entry(object):
@@ -25,12 +31,16 @@ class Entry(object):
             self.full = join(self.root, self.name)
 
         try:
-            st = os.stat(self.full)
+            self.stat_info = os.stat(self.full)
         finally:
-            st = os.lstat(self.full)
+            self.stat_info = os.lstat(self.full)
 
-        self.mtime = st.st_mtime
-        self.size = st.st_size
+    def __str__(self):
+        return (self.get_permission_string() + "\t"
+            + self.get_owner() + "\t"
+            + self.get_group() + "\t"
+            + self.get_size() + "\t"
+            + self.name)
 
     def __getitem__(self, index):
         if index == 'root':
@@ -46,19 +56,69 @@ class Entry(object):
         elif index == 'size':
             return self.size
 
+    def get_permission_string(self):
+        pref_string = list('----------')
+        if path.isdir(self.full):
+            pref_string[0] = 'd'
+        elif path.islink(self.full):
+            pref_string[0] = 'l'
+
+        permissions = os.stat(self.full)[ST_MODE]
+        if (permissions & S_IRUSR) > 0:
+            pref_string[1] = 'r'
+        if (permissions & S_IWUSR) > 0:
+            pref_string[2] = 'w'
+        if (permissions & S_IXUSR) > 0:
+            pref_string[3] = 'x'
+
+        if (permissions & S_IRGRP) > 0:
+            pref_string[4] = 'r'
+        if (permissions & S_IWGRP) > 0:
+            pref_string[5] = 'w'
+        if (permissions & S_IXGRP) > 0:
+            pref_string[6] = 'x'
+
+        if (permissions & S_IROTH) > 0:
+            pref_string[7] = 'r'
+        if (permissions & S_IWOTH) > 0:
+            pref_string[8] = 'w'
+        if (permissions & S_IXOTH) > 0:
+            pref_string[9] = 'x'
+
+        return ''.join(pref_string)
+
+    def get_size(self):
+        suffixes = ['b', 'k', 'M', 'G']
+        i = 0
+        size = self.stat_info.st_size
+        while (i < len(suffixes) and size > 1024):
+            i += 1
+            size = size / 1024
+        if (i >= len(suffixes)):
+            i = -1 + len(suffixes)
+        return '{0:>8.1f}'.format(size) + suffixes[i]
+
+    def get_owner(self):
+        uid = self.stat_info.st_uid
+        return pwd.getpwuid(uid)[0]
+
+    def get_group(self):
+        gid = self.stat_info.st_gid
+        return grp.getgrgid(gid)[0]
+
 
 class DiredView(object):
     """docstring for DiredView"""
-    def __init__(self, window, directory):
+    def __init__(self, window=None, directory=None, view=None):
         super(DiredView, self).__init__()
         self.directory = directory
-        self.suffixes = ['b', 'k', 'M', 'G']
 
-        self.view = None
-        # check to see if the view already exists
-        for view in window.views():
-            if "Dired: " + directory == view.name():
-                self.view = view
+        self.view = view
+        if not self.view:
+            # check to see if the view already exists
+            for view in window.views():
+                if "Dired: " + directory == view.name():
+                    self.view = view
 
         # create a new view if we did not return an existing one
         if not self.view:
@@ -70,6 +130,9 @@ class DiredView(object):
             self.view.settings().set('command_mode', False)
             self.view.settings().set('dired_current_line', 0)
 
+        self.entries = self.get_entries(self.view)
+
+    def draw(self):
         region = sublime.Region(0, -1 + self.view.size())
         edit = self.view.begin_edit()
         self.view.erase(edit, region)
@@ -79,27 +142,10 @@ class DiredView(object):
         self.view.set_syntax_file("Packages/Dired/Dired.tmLanguage")
         self.view.settings().set('dired_directory', self.directory)
 
-    def populate(self):
-        entries = self.get_entries(self.view)
-        self.view.settings().set('dired_entries', entries)
         edit = self.view.begin_edit()
         pt = 0
-        for entry in entries:
-            i = 0
-            while (i < len(self.suffixes) and entry.size > 1024):
-                i += 1
-                entry.size = entry.size / 1024
-            if (i >= len(self.suffixes)):
-                i = -1 + len(self.suffixes)
-            size_str = '{0:>8.1f}'.format(entry.size) + self.suffixes[i]
-            if (path.islink(entry.full)):
-                type = '@'
-            elif (path.isdir(entry.full)):
-                type = '/'
-            else:
-                type = ' '
-            pt += self.view.insert(edit, pt, size_str + " |: "
-                + entry.name + type + "\n")
+        for entry in self.entries:
+            pt += self.view.insert(edit, pt, str(entry) + "\n")
         self.view.end_edit(edit)
         line = self.view.settings().get('dired_current_line')
         pt = self.view.text_point(line, 0)
@@ -108,7 +154,7 @@ class DiredView(object):
         self.view.show_at_center(pt)
 
     def get_entries(self, view):
-        root = view.settings().get('dired_directory')
+        root = self.directory
         expanded = view.settings().get('dired_expanded')
         sort_key = view.settings().get('dired_sort')
         sort_reverse = view.settings().get('dired_sort_reverse')
@@ -150,10 +196,10 @@ class DiredCommand(sublime_plugin.WindowCommand):
 
     def run(self, directory=False):
         directory = self.determine_directory(directory)
-        diredView = DiredView(self.window, directory)
-        diredView.populate()
-        self.update_status(diredView.view)
-        self.window.focus_view(diredView.view)
+        self.diredView = DiredView(window=self.window, directory=directory)
+        self.diredView.draw()
+        self.update_status(self.diredView.view)
+        self.window.focus_view(self.diredView.view)
 
 
 class DiredProjectCommand(DiredCommand):
@@ -191,8 +237,11 @@ class DiredLineParser(sublime_plugin.TextCommand):
 
 class DiredOpenFileCommand(DiredLineParser):
     def run(self, edit):
+        directory = self.view.settings().get('dired_directory')
+        print directory
+        self.diredView = DiredView(directory=directory, view=self.view)
         self.record_point()
-        entry = self.get_entry()
+        entry = self.diredView.entries[self.view.settings().get('dired_current_line')]
         v = self.view
         f = entry['full']
         if (isdir(f)):
