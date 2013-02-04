@@ -2,19 +2,17 @@ import sublime
 import sublime_plugin
 import os
 import os.path
-from os.path import dirname
+from os import path
 from os import listdir
+from os.path import dirname
 from os.path import isdir
 from os.path import commonprefix
 from os.path import relpath
-from stat import *
 from os.path import join
-import os
-import os.path
-from os import path
 import grp
 import pwd
-import os
+from datetime import datetime
+from stat import *
 
 
 class Entry(object):
@@ -40,6 +38,7 @@ class Entry(object):
             + self.get_owner() + "\t"
             + self.get_group() + "\t"
             + self.get_size() + "\t"
+            + self.get_last_modified() + "\t"
             + self.name)
 
     def __getitem__(self, index):
@@ -98,6 +97,9 @@ class Entry(object):
             i = -1 + len(suffixes)
         return '{0:>8.1f}'.format(size) + suffixes[i]
 
+    def get_last_modified(self):
+        return str(datetime.fromtimestamp(self.stat_info.st_mtime))
+
     def get_owner(self):
         uid = self.stat_info.st_uid
         return pwd.getpwuid(uid)[0]
@@ -152,6 +154,7 @@ class DiredView(object):
         self.view.sel().clear()
         self.view.sel().add(sublime.Region(pt))
         self.view.show_at_center(pt)
+        self.view.set_read_only(True)
 
     def get_entries(self, view):
         root = self.directory
