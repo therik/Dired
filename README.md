@@ -29,6 +29,8 @@ You can open the file on the current line with `Enter`.  If there is a directory
 
 `^`: move up a directory
 
+`+`: create a directory
+
 # License
 
 Copyright (c) 2011 Kai Grossjohann
