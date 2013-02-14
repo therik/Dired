@@ -123,5 +123,14 @@
 			"operator": "equal",
 			"operand": "text.dired"
 		}]
+	},
+	{ 
+		"keys": ["+"], 
+		"command": "dired_create_directory",
+			"context": [{
+			"key": "selector",
+			"operator": "equal",
+			"operand": "text.dired"
+		}]
 	}
 ]

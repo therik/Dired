@@ -12,7 +12,18 @@ from os.path import join
 import grp
 import pwd
 from datetime import datetime
-from stat import *
+from stat import (
+        ST_MODE,
+        S_IRUSR,
+        S_IWUSR,
+        S_IXUSR,
+        S_IRGRP,
+        S_IWGRP,
+        S_IXGRP,
+        S_IROTH,
+        S_IWOTH,
+        S_IXOTH,
+)
 
 
 class Entry(object):
@@ -132,9 +143,10 @@ class DiredView(object):
             self.view.settings().set('command_mode', False)
             self.view.settings().set('dired_current_line', 0)
 
-        self.entries = self.get_entries(self.view)
+        self.entries = self.get_entries()
 
     def draw(self):
+        self.view.set_read_only(False)
         region = sublime.Region(0, -1 + self.view.size())
         edit = self.view.begin_edit()
         self.view.erase(edit, region)
@@ -156,11 +168,11 @@ class DiredView(object):
         self.view.show_at_center(pt)
         self.view.set_read_only(True)
 
-    def get_entries(self, view):
+    def get_entries(self):
         root = self.directory
-        expanded = view.settings().get('dired_expanded')
-        sort_key = view.settings().get('dired_sort')
-        sort_reverse = view.settings().get('dired_sort_reverse')
+        expanded = self.view.settings().get('dired_expanded')
+        sort_key = self.view.settings().get('dired_sort')
+        sort_reverse = self.view.settings().get('dired_sort_reverse')
         unsorted = []
         top_level = listdir(root)
         for t in top_level:
@@ -241,7 +253,6 @@ class DiredLineParser(sublime_plugin.TextCommand):
 class DiredOpenFileCommand(DiredLineParser):
     def run(self, edit):
         directory = self.view.settings().get('dired_directory')
-        print directory
         self.diredView = DiredView(directory=directory, view=self.view)
         self.record_point()
         entry = self.diredView.entries[self.view.settings().get('dired_current_line')]
@@ -251,15 +262,6 @@ class DiredOpenFileCommand(DiredLineParser):
             self.dired(directory=f)
         else:
             v.window().open_file(f)
-
-
-class DiredOpenParentDirectory(sublime_plugin.TextCommand):
-    def run(self, directory=False):
-        directory = self.view.settings().get('dired_directory')
-        directory = os.path.dirname(directory)
-        self.view.window().run_command('dired', {
-            'directory': directory,
-        })
 
 
 class DiredExpandDirectoryCommand(DiredLineParser):
@@ -278,6 +280,32 @@ class DiredExpandDirectoryCommand(DiredLineParser):
             expanded.append(f['name'])
         v.settings().set('dired_expanded', expanded)
         self.dired()
+
+
+class DiredOpenParentDirectory(sublime_plugin.TextCommand):
+    def run(self, directory=False):
+        directory = self.view.settings().get('dired_directory')
+        directory = os.path.dirname(directory)
+        self.view.window().run_command('dired', {
+            'directory': directory,
+        })
+
+
+class DiredCreateDirectory(sublime_plugin.TextCommand):
+    """docstring for DiredCreateDirectory"""
+    def run(self, directory=False):
+        self.view.window().show_input_panel("New Folder:", "", self.on_done,
+            None, None)
+
+    def on_done(self, newFolder):
+        directory = self.view.settings().get('dired_directory')
+        fullPath = directory + '/' + newFolder
+
+        if not os.path.exists(fullPath):
+            os.makedirs(fullPath)
+            self.view.window().run_command('dired', {
+                'directory': directory,
+            })
 
 
 class DiredSortCommand(DiredLineParser):
