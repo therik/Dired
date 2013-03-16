@@ -12,18 +12,17 @@ from os.path import join
 import grp
 import pwd
 from datetime import datetime
-from stat import (
-        ST_MODE,
-        S_IRUSR,
-        S_IWUSR,
-        S_IXUSR,
-        S_IRGRP,
-        S_IWGRP,
-        S_IXGRP,
-        S_IROTH,
-        S_IWOTH,
-        S_IXOTH,
-)
+from stat import (ST_MODE,
+                  S_IRUSR,
+                  S_IWUSR,
+                  S_IXUSR,
+                  S_IRGRP,
+                  S_IWGRP,
+                  S_IXGRP,
+                  S_IROTH,
+                  S_IWOTH,
+                  S_IXOTH,
+                  )
 
 
 class Entry(object):
@@ -46,11 +45,11 @@ class Entry(object):
 
     def __str__(self):
         return (self.get_permission_string() + "\t"
-            + self.get_owner() + "\t"
-            + self.get_group() + "\t"
-            + self.get_size() + "\t"
-            + self.get_last_modified() + "\t"
-            + self.name)
+                + self.get_owner() + "\t"
+                + self.get_group() + "\t"
+                + self.get_size() + "\t"
+                + self.get_last_modified() + "\t"
+                + self.name)
 
     def __getitem__(self, index):
         if index == 'root':
@@ -187,13 +186,13 @@ class DiredView(object):
                     Entry(root, relpath(join(subroot, x), root))
                 )
         return ([Entry(root, '..')] +
-            sorted(unsorted, key=lambda x: x[sort_key], reverse=sort_reverse))
+                sorted(unsorted, key=lambda x: x[sort_key], reverse=sort_reverse))
 
 
 class DiredCommand(sublime_plugin.WindowCommand):
     def update_status(self, view):
         view.set_status('dired_sort', 'Sort by '
-            + view.settings().get('dired_sort'))
+                        + view.settings().get('dired_sort'))
         if view.settings().get('dired_sort_reverse'):
             view.set_status('dired_sort_reverse', 'reverse')
         else:
@@ -227,7 +226,7 @@ class DiredProjectCommand(DiredCommand):
         folders = self.window.folders()
         if (len(folders) > 1):
             result.settings().set('dired_expanded',
-                map(lambda x: relpath(x, directory), self.window.folders()))
+                                  map(lambda x: relpath(x, directory), self.window.folders()))
         return result
 
 
@@ -295,7 +294,7 @@ class DiredCreateDirectory(sublime_plugin.TextCommand):
     """docstring for DiredCreateDirectory"""
     def run(self, directory=False):
         self.view.window().show_input_panel("New Folder:", "", self.on_done,
-            None, None)
+                                            None, None)
 
     def on_done(self, newFolder):
         directory = self.view.settings().get('dired_directory')
